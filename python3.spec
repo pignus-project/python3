@@ -71,7 +71,7 @@
 %global with_systemtap 1
 
 # some arches don't have valgrind so we need to disable its support on them
-%ifnarch s390 %{mips} riscv64
+%ifnarch s390 %{mips} riscv64 armv6hl
 %global with_valgrind 1
 %else
 %global with_valgrind 0
@@ -112,7 +112,7 @@
 Summary: Version 3 of the Python programming language aka Python 3000
 Name: python3
 Version: %{pybasever}.2
-Release: 4%{?dist}
+Release: 4%{?dist}.pi1
 License: Python
 Group: Development/Languages
 
@@ -1555,6 +1555,9 @@ rm -fr %{buildroot}
 # ======================================================
 
 %changelog
+* Wed Nov 23 2016 Lubomir Rintel <lkundrak@v3.sk> - 3.5.2-4.pi1
+- Drop valgrind dependency for armv6hl
+
 * Wed Sep 14 2016 Charalampos Stratakis <cstratak@redhat.com> - 3.5.2-4
 - Obsolete and Provide python35 package
 
