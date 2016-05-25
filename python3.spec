@@ -1165,7 +1165,7 @@ CheckPython() {
     %ifarch %{mips64}
     -x test_ctypes \
     %endif
-    %ifarch %{power64} s390 s390x armv7hl aarch64 %{mips}
+    %ifarch %{power64} s390 s390x %{arm} aarch64 %{mips}
     -x test_gdb
     %endif
 
