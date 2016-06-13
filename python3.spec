@@ -25,7 +25,7 @@
 # python-sphinx, pytest, python-requests, cloud-init, dnf, anaconda, abrt.
 
 
-%global with_rewheel 0
+%global with_rewheel 1
 
 %global pybasever 3.6
 
