@@ -112,7 +112,7 @@
 Summary: Version 3 of the Python programming language aka Python 3000
 Name: python3
 Version: %{pybasever}.1
-Release: 14%{?dist}
+Release: 15%{?dist}
 License: Python
 Group: Development/Languages
 
@@ -847,9 +847,9 @@ BuildPython debug \
   python-debug \
   python%{pybasever}-debug \
 %ifarch %{ix86} x86_64 ppc %{power64}
-  "--with-pydebug --with-tsc --with-count-allocs --with-call-profile --without-ensurepip" \
+  "--with-pydebug --with-tsc --without-ensurepip" \
 %else
-  "--with-pydebug --with-count-allocs --with-call-profile --without-ensurepip" \
+  "--with-pydebug --without-ensurepip" \
 %endif
   false \
   -O0
@@ -1656,6 +1656,10 @@ rm -fr %{buildroot}
 # ======================================================
 
 %changelog
+* Mon Sep 12 2016 Charalampos Stratakis <cstratak@redhat.com> - 3.5.1-15
+- Update %py_byte_compile macro
+- Remove unused configure flags (rhbz#1374357)
+
 * Fri Sep 09 2016 Tomas Orsava <torsava@redhat.com> - 3.5.1-14
 - Updated .pyc 'bytecompilation with the newly installed interpreter' to also
   recompile optimized .pyc files
