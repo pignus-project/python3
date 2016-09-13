@@ -112,7 +112,7 @@
 Summary: Version 3 of the Python programming language aka Python 3000
 Name: python3
 Version: %{pybasever}.1
-Release: 15%{?dist}
+Release: 16%{?dist}
 License: Python
 Group: Development/Languages
 
@@ -531,6 +531,14 @@ URL: http://www.python.org/
 Provides: python(abi) = %{pybasever}
 
 Requires: %{name}-libs%{?_isa} = %{version}-%{release}
+
+# In order to support multiple python interpreters, apart from the system python3,
+# for development purposes, new packages were introduced which can be installed in parallel
+# with the main python3 package (e.g. 1369688), with the naming scheme 'python<version>',
+# however in order to keep the upgrade path clean we need to Obsolete and Provide
+# these packages at the main python3 package.
+Obsoletes: python%{pyshortver}
+Provides: python%{pyshortver} = %{version}-%{release}
 
 %if 0%{with_rewheel}
 Requires: python3-setuptools
@@ -1656,6 +1664,9 @@ rm -fr %{buildroot}
 # ======================================================
 
 %changelog
+* Wed Sep 14 2016 Charalampos Stratakis <cstratak@redhat.com> - 3.5.1-16
+- Obsolete and Provide python35 package
+
 * Mon Sep 12 2016 Charalampos Stratakis <cstratak@redhat.com> - 3.5.1-15
 - Update %py_byte_compile macro
 - Remove unused configure flags (rhbz#1374357)
