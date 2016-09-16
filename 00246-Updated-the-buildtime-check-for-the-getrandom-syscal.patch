@@ -1,0 +1,58 @@
+From 7cedccf19a4a653b3e591928dc7b3d0e7d1ec50a Mon Sep 17 00:00:00 2001
+From: Tomas Orsava <torsava@redhat.com>
+Date: Fri, 16 Sep 2016 17:58:35 +0200
+Subject: [PATCH] Updated the buildtime check for the getrandom syscall
+
+to the one from Python version 3.5.2
+---
+ configure    | 6 ++++--
+ configure.ac | 6 ++++--
+ 2 files changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/configure b/configure
+index 3a46658..f7f3717 100755
+--- a/configure
++++ b/configure
+@@ -16111,13 +16111,15 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ /* end confdefs.h.  */
+ 
+ 
++    #include <unistd.h>
+     #include <sys/syscall.h>
++    #include <linux/random.h>
+ 
+     int main() {
+         char buffer[1];
+         const size_t buflen = sizeof(buffer);
+-        const int flags = 0;
+-        /* ignore the result, Python checks for ENOSYS at runtime */
++        const int flags = GRND_NONBLOCK;
++        /* ignore the result, Python checks for ENOSYS and EAGAIN at runtime */
+         (void)syscall(SYS_getrandom, buffer, buflen, flags);
+         return 0;
+     }
+diff --git a/configure.ac b/configure.ac
+index 05e067e..526688c 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -5168,13 +5168,15 @@ AC_MSG_CHECKING(for the Linux getrandom() syscall)
+ AC_LINK_IFELSE(
+ [
+   AC_LANG_SOURCE([[
++    #include <unistd.h>
+     #include <sys/syscall.h>
++    #include <linux/random.h>
+ 
+     int main() {
+         char buffer[1];
+         const size_t buflen = sizeof(buffer);
+-        const int flags = 0;
+-        /* ignore the result, Python checks for ENOSYS at runtime */
++        const int flags = GRND_NONBLOCK;
++        /* ignore the result, Python checks for ENOSYS and EAGAIN at runtime */
+         (void)syscall(SYS_getrandom, buffer, buflen, flags);
+         return 0;
+     }
+-- 
+2.9.0
+

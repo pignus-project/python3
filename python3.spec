@@ -112,7 +112,7 @@
 Summary: Version 3 of the Python programming language aka Python 3000
 Name: python3
 Version: %{pybasever}.1
-Release: 16%{?dist}
+Release: 17%{?dist}
 License: Python
 Group: Development/Languages
 
@@ -501,6 +501,15 @@ Patch241: 00241-CVE-2016-5636-buffer-overflow-in-zipimport-module-fix.patch
 # Resolves: rhbz#1359177
 Patch242: 00242-CVE-2016-1000110-httpoxy.patch
 
+# 00246 #
+# Backported the build-time check for the getrandom syscall from Python 3.5.2.
+#   The Python 3.5.1 build-time check was failing due to missing headers.
+# Note: After rhbz#1377240 is resolved, the patch for the configure file
+#   can be omitted.
+# Resolves: rhbz#1350123
+Patch246: 00246-Updated-the-buildtime-check-for-the-getrandom-syscal.patch
+
+
 # (New patches go here ^^^)
 #
 # When adding new patches to "python" and "python3" in Fedora, EL, etc.,
@@ -768,6 +777,7 @@ sed -r -i s/'_PIP_VERSION = "[0-9.]+"'/'_PIP_VERSION = "%{pip_version}"'/ Lib/en
 %patch237 -p1
 %patch241 -p1
 %patch242 -p1
+%patch246 -p1
 
 # Currently (2010-01-15), http://docs.python.org/library is for 2.6, and there
 # are many differences between 2.6 and the Python 3 library.
@@ -1664,6 +1674,11 @@ rm -fr %{buildroot}
 # ======================================================
 
 %changelog
+* Fri Sep 16 2016 Tomas Orsava <torsava@redhat.com> - 3.5.1-17
+- Backported the build-time check for the getrandom syscall from Python 3.5.2
+- The Python 3.5.1 build-time check was failing due to missing headers
+- Resolves: rhbz#1350123
+
 * Wed Sep 14 2016 Charalampos Stratakis <cstratak@redhat.com> - 3.5.1-16
 - Obsolete and Provide python35 package
 
