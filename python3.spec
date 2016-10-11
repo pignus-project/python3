@@ -71,7 +71,7 @@
 %global with_systemtap 1
 
 # some arches don't have valgrind so we need to disable its support on them
-%ifnarch s390
+%ifnarch s390 %{mips} riscv64
 %global with_valgrind 1
 %else
 %global with_valgrind 0
@@ -87,7 +87,7 @@
 
 # We want to byte-compile the .py files within the packages using the new
 # python3 binary.
-# 
+#
 # Unfortunately, rpmbuild's infrastructure requires us to jump through some
 # hoops to avoid byte-compiling with the system python 2 version:
 #   /usr/lib/rpm/redhat/macros sets up build policy that (amongst other things)
@@ -100,7 +100,7 @@
   %{!?__debug_package:/usr/lib/rpm/brp-strip %{__strip}} \
   /usr/lib/rpm/brp-strip-static-archive %{__strip} \
   /usr/lib/rpm/brp-strip-comment-note %{__strip} %{__objdump} \
-  /usr/lib/rpm/brp-python-hardlink 
+  /usr/lib/rpm/brp-python-hardlink
 # to remove the invocation of brp-python-bytecompile, whilst keeping the
 # invocation of brp-python-hardlink (since this should still work for python3
 # pyc/pyo files)
@@ -111,8 +111,8 @@
 # ==================
 Summary: Version 3 of the Python programming language aka Python 3000
 Name: python3
-Version: %{pybasever}.1
-Release: 17%{?dist}
+Version: %{pybasever}.2
+Release: 3%{?dist}
 License: Python
 Group: Development/Languages
 
@@ -232,13 +232,6 @@ Patch104: 00104-lib64-fix-for-test_install.patch
 # Downstream only: not appropriate for upstream
 Patch111: 00111-no-static-lib.patch
 
-# 00131 #
-# The four tests in test_io built on top of check_interrupted_write_retry
-# fail when built in Koji, for ppc and ppc64; for some reason, the SIGALRM
-# handlers are never called, and the call to write runs to completion
-# (rhbz#732998)
-Patch131: 00131-disable-tests-in-test_io.patch
-
 # 00132 #
 # Add non-standard hooks to unittest for use in the "check" phase below, when
 # running selftests within the build:
@@ -260,14 +253,6 @@ Patch132: 00132-add-rpmbuild-hooks-to-unittest.patch
 # 00137 #
 # Some tests within distutils fail when run in an rpmbuild:
 Patch137: 00137-skip-distutils-tests-that-fail-in-rpmbuild.patch
-
-# 00139 #
-# ARM-specific: skip known failure in test_float:
-#  http://bugs.python.org/issue8265 (rhbz#706253)
-Patch139: 00139-skip-test_float-known-failure-on-arm.patch
-
-# ideally short lived patch disabling a test thats fragile on different arches
-Patch140: python3-arm-skip-failing-fragile-test.patch
 
 # 00143 #
 # Fix the --with-tsc option on ppc64, and rework it on 32-bit ppc to avoid
@@ -298,13 +283,6 @@ Patch143: 00143-tsc-on-ppc.patch
 # patch, since they may be useful again if upstream decides to rerevert sha3
 # implementation and OpenSSL still doesn't support it. For now, they're harmless.
 Patch146: 00146-hashlib-fips.patch
-
-# 00150 #
-# temporarily disable rAssertAlmostEqual in test_cmath on PPC (bz #750811)
-# caused by a glibc bug. This patch can be removed when we have a glibc with
-# the patch mentioned here:
-#   http://sourceware.org/bugzilla/show_bug.cgi?id=13472
-Patch150: 00150-disable-rAssertAlmostEqual-cmath-on-ppc.patch
 
 # 00155 #
 # Avoid allocating thunks in ctypes unless absolutely necessary, to avoid
@@ -342,42 +320,22 @@ Patch160: 00160-disable-test_fs_holes-in-rpm-build.patch
 # Not yet sent upstream
 Patch163: 00163-disable-parts-of-test_socket-in-rpm-build.patch
 
-# 0164 #
-# some tests in test._io interrupted_write-* fail on PPC (rhbz#846849)
-# testChainingDescriptors  test in test_exceptions fails on PPc, too (rhbz#846849)
-# disable those tests so that rebuilds on PPC can continue
-Patch164: 00164-disable-interrupted_write-tests-on-ppc.patch
-
-# 00170 #                                                                                           
-# In debug builds, try to print repr() when a C-level assert fails in the                           
-# garbage collector (typically indicating a reference-counting error                                
-# somewhere else e.g in an extension module)                                                        
-# Backported to 2.7 from a patch I sent upstream for py3k                                           
-#   http://bugs.python.org/issue9263  (rhbz#614680)                                                 
-# hiding the proposed new macros/functions within gcmodule.c to avoid exposing                      
-# them within the extension API.                                                                    
+# 00170 #
+# In debug builds, try to print repr() when a C-level assert fails in the
+# garbage collector (typically indicating a reference-counting error
+# somewhere else e.g in an extension module)
+# Backported to 2.7 from a patch I sent upstream for py3k
+#   http://bugs.python.org/issue9263  (rhbz#614680)
+# hiding the proposed new macros/functions within gcmodule.c to avoid exposing
+# them within the extension API.
 # (rhbz#850013
 Patch170: 00170-gc-assertions.patch
-
-# 00173 #
-# Workaround for ENOPROTOOPT seen in Koji withi test.support.bind_port()
-# (rhbz#913732)
-Patch173: 00173-workaround-ENOPROTOOPT-in-bind_port.patch
 
 # 00178 #
 # Don't duplicate various FLAGS in sysconfig values
 # http://bugs.python.org/issue17679
 # Does not affect python2 AFAICS (different sysconfig values initialization)
 Patch178: 00178-dont-duplicate-flags-in-sysconfig.patch
-
-# 00179 #
-# Workaround for https://bugzilla.redhat.com/show_bug.cgi?id=951802
-# Reported upstream in http://bugs.python.org/issue17737
-# This patch basically looks at every frame and if it is somehow corrupted,
-# it just stops printing the traceback - it doesn't fix the actual bug.
-# This bug seems to only affect ARM.
-# Doesn't seem to affect Python 2 AFAICS.
-Patch179: 00179-dont-raise-error-on-gdb-corrupted-frames-in-backtrace.patch
 
 # 00180 #
 # Enable building on ppc64p7
@@ -424,31 +382,6 @@ Patch188: 00188-fix-lib2to3-tests-when-hashlib-doesnt-compile-properly.patch
 Patch189: 00189-add-rewheel-module.patch
 %endif
 
-# 00194 #
-# Tests requiring SIGHUP to work don't work in Koji
-# see rhbz#1088233
-Patch194: temporarily-disable-tests-requiring-SIGHUP.patch
-
-# 00196 #
-#  Fix test_gdb failure on ppc64le
-Patch196: 00196-test-gdb-match-addr-before-builtin.patch
-
-# 00200 #                                                                                           
-# Fix for gettext plural form headers (lines that begin with "#")                                   
-# Note: Backported from scl
-Patch200: 00200-gettext-plural-fix.patch
-
-# 00201 #                                                                                           
-# Fixes memory leak in gdbm module (rhbz#977308)                                                    
-# This was upstreamed as a part of bigger patch, but for our purposes                               
-# this is ok: http://bugs.python.org/issue18404                                                     
-# Note: Backported from scl
-Patch201: 00201-fix-memory-leak-in-gdbm.patch 
-
-# 00203 #
-# test_threading fails in koji dues to it's handling of signals
-Patch203: 00203-disable-threading-test-koji.patch
-
 # 00205 #
 # LIBPL variable in makefile takes LIBPL from configure.ac
 # but the LIBPL variable defined there doesn't respect libdir macro
@@ -459,39 +392,11 @@ Patch205: 00205-make-libpl-respect-lib64.patch
 # by debian but fedora infra uses only eabi without hf
 Patch206: 00206-remove-hf-from-arm-triplet.patch
 
-# 00207 #
-# Avoid truncated _math.o files caused by parallel builds
-# modified version of https://bugs.python.org/issue24421
-# rhbz#1292461
-Patch207: 00207-math-once.patch
-
-# 00208 #
-# test_with_pip (test.test_venv.EnsurePipTest) fails on ppc64*
-# rhbz#1292467
-Patch208: 00208-disable-test_with_pip-on-ppc.patch
-
 # 00209 #
 # Fix test breakage with version 2.2.0 of Expat
 # rhbz#1353918: https://bugzilla.redhat.com/show_bug.cgi?id=1353918
 # FIXED UPSTREAM: http://bugs.python.org/issue27369
 Patch209: 00209-fix-test-pyexpat-failure.patch
-
-# 00237 #
-# CVE-2016-0772 python: smtplib StartTLS stripping attack
-# rhbz#1303647: https://bugzilla.redhat.com/show_bug.cgi?id=1303647
-# rhbz#1346345: https://bugzilla.redhat.com/show_bug.cgi?id=1346345
-# FIXED UPSTREAM: https://hg.python.org/cpython/rev/d590114c2394
-# Raise an error when STARTTLS fails
-Patch237: 00237-Raise-an-error-when-STARTTLS-fails.patch
-
-# 00241 #
-# CVE-2016-5636: http://seclists.org/oss-sec/2016/q2/560
-# rhbz#1345859: https://bugzilla.redhat.com/show_bug.cgi?id=1345859
-# https://hg.python.org/cpython/rev/10dad6da1b28/
-# https://hg.python.org/cpython/rev/5533a9e02b21
-# Fix possible integer overflow and heap corruption in zipimporter.get_data()
-# FIXED UPSTREAM: https://bugs.python.org/issue26171
-Patch241: 00241-CVE-2016-5636-buffer-overflow-in-zipimport-module-fix.patch
 
 # 00242 #
 # HTTPoxy attack (CVE-2016-1000110)
@@ -501,14 +406,12 @@ Patch241: 00241-CVE-2016-5636-buffer-overflow-in-zipimport-module-fix.patch
 # Resolves: rhbz#1359177
 Patch242: 00242-CVE-2016-1000110-httpoxy.patch
 
-# 00246 #
-# Backported the build-time check for the getrandom syscall from Python 3.5.2.
-#   The Python 3.5.1 build-time check was failing due to missing headers.
-# Note: After rhbz#1377240 is resolved, the patch for the configure file
-#   can be omitted.
-# Resolves: rhbz#1350123
-Patch246: 00246-Updated-the-buildtime-check-for-the-getrandom-syscal.patch
-
+# 00243 #
+# Fix the triplet used on 64-bit MIPS
+# rhbz#1322526: https://bugzilla.redhat.com/show_bug.cgi?id=1322526
+# Upstream uses Debian-like style mips64-linux-gnuabi64
+# Fedora needs the default mips64-linux-gnu
+Patch243: 00243-fix-mips64-triplet.patch
 
 # (New patches go here ^^^)
 #
@@ -519,10 +422,6 @@ Patch246: 00246-Updated-the-buildtime-check-for-the-getrandom-syscal.patch
 #
 #     https://fedoraproject.org/wiki/SIGs/Python/PythonPatches
 
-
-# This is the generated patch to "configure"; see the description of
-#   %{regenerate_autotooling_patch}
-# above:
 
 # add correct arch for ppc64/ppc64le
 # it should be ppc64le-linux-gnu/ppc64-linux-gnu instead powerpc64le-linux-gnu/powerpc64-linux-gnu
@@ -715,7 +614,7 @@ for f in md5module.c sha1module.c sha256module.c sha512module.c; do
 done
 
 %if 0%{with_rewheel}
-%global pip_version 7.1.0
+%global pip_version 8.0.2
 sed -r -i s/'_PIP_VERSION = "[0-9.]+"'/'_PIP_VERSION = "%{pip_version}"'/ Lib/ensurepip/__init__.py
 %endif
 
@@ -733,32 +632,18 @@ sed -r -i s/'_PIP_VERSION = "[0-9.]+"'/'_PIP_VERSION = "%{pip_version}"'/ Lib/en
 %patch104 -p1
 %endif
 %patch111 -p1
-%ifarch ppc %{power64}
-%patch131 -p1
-%endif
 %patch132 -p1
 %patch137 -p1
-%ifarch %{arm}
-%patch139 -p1
-%patch140 -p1
-%endif
 %patch143 -p1 -b .tsc-on-ppc
 %patch146 -p1
-%ifarch ppc %{power64}
-%patch150 -p1
-%endif
 %patch155 -p1
 %patch157 -p1
 %patch160 -p1
 %patch163 -p1
-%ifarch ppc %{power64}
-%patch164 -p1
-%endif
-%patch173 -p1
+%patch170 -p0
 %patch178 -p1
-%patch179 -p1
 %patch180 -p1
-%patch184  -p1
+%patch184 -p1
 %patch186 -p1
 %patch188 -p1
 
@@ -766,18 +651,11 @@ sed -r -i s/'_PIP_VERSION = "[0-9.]+"'/'_PIP_VERSION = "%{pip_version}"'/ Lib/en
 %patch189 -p1
 %endif
 
-%patch194 -p1
-%patch196 -p1
-%patch203 -p1
 %patch205 -p1
 %patch206 -p1
-%patch207 -p1
-%patch208 -p1
 %patch209 -p1
-%patch237 -p1
-%patch241 -p1
 %patch242 -p1
-%patch246 -p1
+%patch243 -p1
 
 # Currently (2010-01-15), http://docs.python.org/library is for 2.6, and there
 # are many differences between 2.6 and the Python 3 library.
@@ -809,7 +687,7 @@ export LDFLAGS="$RPM_LD_FLAGS `pkg-config --libs-only-L openssl`"
 # Define a function, for how to perform a "build" of python for a given
 # configuration:
 BuildPython() {
-  ConfName=$1	      
+  ConfName=$1
   BinaryName=$2
   SymlinkName=$3
   ExtraConfigArgs=$4
@@ -890,7 +768,7 @@ mkdir -p %{buildroot}%{_prefix} %{buildroot}%{_mandir}
 
 InstallPython() {
 
-  ConfName=$1	      
+  ConfName=$1
   PyInstSoName=$2
   MoreCFlags=$3
 
@@ -982,7 +860,7 @@ install -d -m 0755 %{buildroot}/%{_prefix}/lib/python%{pybasever}/site-packages/
 %global _pyconfig32_h pyconfig-32.h
 %global _pyconfig64_h pyconfig-64.h
 
-%ifarch %{power64} s390x x86_64 ia64 alpha sparc64 aarch64
+%ifarch %{power64} s390x x86_64 ia64 alpha sparc64 aarch64 %{mips64} riscv64
 %global _pyconfig_h %{_pyconfig64_h}
 %else
 %global _pyconfig_h %{_pyconfig32_h}
@@ -1075,7 +953,7 @@ find %{buildroot}/ -name \*.py -exec sed -i 's/\r//' {} \;
 # Fix an encoding:
 iconv -f iso8859-1 -t utf-8 %{buildroot}/%{pylibdir}/Demo/rpc/README > README.conv && mv -f README.conv %{buildroot}/%{pylibdir}/Demo/rpc/README
 
-# Note that 
+# Note that
 #  %{pylibdir}/Demo/distutils/test2to3/setup.py
 # is in iso-8859-1 encoding, and that this is deliberate; this is test data
 # for the 2to3 tool, and one of the functions of the 2to3 tool is to fixup
@@ -1111,7 +989,7 @@ for Module in %{buildroot}/%{dynload_dir}/*.so ; do
     *.%{SOABI_debug})
         ldd $Module | grep %{py_INSTSONAME_optimized} &&
             (echo Debug module $Module linked against optimized %{py_INSTSONAME_optimized} ; exit 1)
-            
+
         ;;
     *.%{SOABI_optimized})
         ldd $Module | grep %{py_INSTSONAME_debug} &&
@@ -1136,7 +1014,7 @@ ln -s \
 # Install a tapset for this libpython into tapsetdir, fixing up the path to the
 # library:
 mkdir -p %{buildroot}%{tapsetdir}
-%ifarch %{power64} s390x x86_64 ia64 alpha sparc64 aarch64
+%ifarch %{power64} s390x x86_64 ia64 alpha sparc64 aarch64 %{mips64}
 %global libpython_stp_optimized libpython%{pybasever}-64.stp
 %global libpython_stp_debug     libpython%{pybasever}-debug-64.stp
 %else
@@ -1194,7 +1072,7 @@ find %{buildroot} -type f -a -name "*.py" -print0 | \
 
 topdir=$(pwd)
 CheckPython() {
-  ConfName=$1	      
+  ConfName=$1
   ConfDir=$(pwd)/build/$ConfName
 
   echo STARTING: CHECKING OF PYTHON FOR CONFIGURATION: $ConfName
@@ -1215,7 +1093,10 @@ CheckPython() {
     %ifarch ppc64le aarch64
     -x test_faulthandler \
     %endif
-    %ifarch %{power64} s390 s390x armv7hl aarch64
+    %ifarch %{mips64}
+    -x test_ctypes \
+    %endif
+    %ifarch %{power64} s390 s390x armv7hl aarch64 %{mips}
     -x test_gdb
     %endif
 
@@ -1657,15 +1538,15 @@ rm -fr %{buildroot}
 
 # We put the debug-gdb.py file inside /usr/lib/debug to avoid noise from
 # ldconfig (rhbz:562980).
-# 
+#
 # The /usr/lib/rpm/redhat/macros defines %__debug_package to use
 # debugfiles.list, and it appears that everything below /usr/lib/debug and
 # (/usr/src/debug) gets added to this file (via LISTFILES) in
 # /usr/lib/rpm/find-debuginfo.sh
-# 
+#
 # Hence by installing it below /usr/lib/debug we ensure it is added to the
 # -debuginfo subpackage
-# (if it doesn't, then the rpmbuild ought to fail since the debug-gdb.py 
+# (if it doesn't, then the rpmbuild ought to fail since the debug-gdb.py
 # payload file would be unpackaged)
 
 
@@ -1674,6 +1555,23 @@ rm -fr %{buildroot}
 # ======================================================
 
 %changelog
+* Tue Oct 11 2016 Tomas Orsava <torsava@redhat.com> - 3.5.2-3
+- Merged F25 branch into F24 thus updating Python to 3.5.2 in F24
+- Added missing changelog entries below this one for the sake of completeness
+
+* Tue Oct 11 2016 Tomas Orsava <torsava@redhat.com> - 3.5.2-2
+- Update %py_byte_compile macro
+- Remove unused configure flags (rhbz#1374357)
+
+* Tue Oct 11 2016 Tomas Orsava <torsava@redhat.com> - 3.5.2-1
+- Rebased to version 3.5.2
+- Set to work with pip version 8.1.2
+- Removed patches 207, 237, 241 as fixes are already contained in Python 3.5.2
+- Removed arch or environment specific patches 194, 196, 203, and 208
+  as test builds indicate they are no longer needed
+- Updated patches 102, 146, and 242 to work with the new Python codebase
+- Removed patches 200, 201, 5000 which weren't even being applied
+
 * Fri Sep 16 2016 Tomas Orsava <torsava@redhat.com> - 3.5.1-17
 - Backported the build-time check for the getrandom syscall from Python 3.5.2
 - The Python 3.5.1 build-time check was failing due to missing headers
@@ -2125,7 +2023,7 @@ ppc to avoid aliasing violations (patch 130; rhbz#698726)
 - add %%python3_version to the rpm macros (rhbz#719082)
 
 * Mon Jul 11 2011 Dennis Gilmore <dennis@ausil.us> - 3.2.1-2
-- disable some tests on sparc arches 
+- disable some tests on sparc arches
 
 * Mon Jul 11 2011 David Malcolm <dmalcolm@redhat.com> - 3.2.1-1
 - 3.2.1; refresh lib64 patch (102), subprocess unit test patch (129), disabling
