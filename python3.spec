@@ -124,7 +124,7 @@
 Summary: Version 3 of the Python programming language aka Python 3000
 Name: python3
 Version: %{pybasever}.0
-Release: 21%{?dist}
+Release: 22%{?dist}
 License: Python
 Group: Development/Languages
 
@@ -1659,6 +1659,9 @@ fi
 # ======================================================
 
 %changelog
+* Tue Mar 21 2017 Tomas Orsava <torsava@redhat.com> - 3.6.0-22
+- Fix syntax error in %%py_byte_compile macro (rhbz#1433569)
+
 * Fri Mar 10 2017 Charalampos Stratakis <cstratak@redhat.com> - 3.6.0-21
 - Use proper command line parsing in _testembed
 - Backport of PEP 538: Coercing the legacy C locale to a UTF-8 based locale
